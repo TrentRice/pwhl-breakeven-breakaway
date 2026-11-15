@@ -218,3 +218,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+PROJECT_PLAN.md
+
+# Data: ignore all data files, but keep the folder structure
+data/**
+!data/**/
+!**/.gitkeep
+
+# macOS
+.DS_Store
