@@ -29,6 +29,14 @@ Lasting decisions made so the poster scores on all four criteria:
 - **Write-up.** A short public write-up of the results (blog post or pitch to The Ice Garden) linked from the README and the poster.
 - **Poster.** It needs a limitations panel and must cite Rachman (2026) as prior work.
 
+## Model decisions from exploration (Step 6, Nov 2026)
+Evidence for each is in `notebooks/01_eda.ipynb`. Numbers below are from that notebook; recompute rather than copy them into results.
+- **Penalty-shot model.** Fit the NHL first and use its posterior (α, σ_s, σ_g, widened) as the PWHL prior: the leagues convert shootouts at about the same rate. Expect small σ_s: shooter success is barely repeatable (split-half reliability near 0 in the PWHL, about 0.1 in the NHL), goalies more so; report that shooter differences are small. Keep δ (in-game penalty shot vs shootout) with a prior centered slightly negative, from the NHL. Round and home terms only as small NHL-informed adjustments, kept only if they help in the holdout test.
+- **Power-play model.** PWHL OT power-play rate = league 5-on-4 rate × r, with r from the NHL 4-on-3/5-on-4 ratio (about 2.0, stable across seasons), then updated with PWHL OT power plays. League-level rate with a strongly shrunk team effect: PWHL teams show no detectable 5-on-4 differences. Scoring rate within a power play is two-piece, early (before the first stoppage) and late, with the early/late ratio's prior centered near the NHL value (about 1.15); the No Escape effect is modest, not a spike. Include a small shorthanded-goal rate, mostly from the NHL.
+- **Overtime model.** The 3-on-3 scoring rate rises through overtime, so `W0(t)` uses a time-varying rate (linear in OT time or piecewise by minute), shape from the NHL and level from the PWHL, computed numerically on the 1-second grid. This replaces the constant-rate formula in PROJECT_PLAN.md §5.3. Home-ice term starts at no advantage and is only lightly updated by PWHL data.
+- **Validation targets.** The model must reproduce NHL OT power-play conversion by time left (called with 2:00+ left vs under 2:00) and the Rachman (2026) PWHL OT power-play rates, which our data matches.
+- **Scope.** Preseason is excluded from the overtime models (most preseason OTs were not tied). NHL games with a missing goal are excluded from rates (it makes no difference, checked).
+
 ## Do not
 - Do not invent data or hand-type results; always compute from data/processed.
 - Do not change PROJECT_PLAN.md without asking.

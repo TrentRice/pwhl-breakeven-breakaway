@@ -16,7 +16,8 @@ Definitions
 - A spell is an unbroken run of man-advantage time for one team. It is split into segments when
   the strength changes (e.g. 5v3 -> 5v4). spell_offset_s is how far into the spell a segment
   starts; first_stoppage_s is when the first faceoff after the spell's opening faceoff happened
-  (the No Escape window ends no earlier than this).
+  (the No Escape window ends no earlier than this). Faceoffs within 2 s of the spell start count
+  as the opening faceoff (the feed sometimes logs it a second late).
 - A goal belongs to the segment with start < goal time <= end (the state just before the goal).
 - Overtime tables cover 3-on-3 overtime only (regular season and preseason); playoff OT is 5-on-5.
 - League-specific flags: no_escape = 1 for PWHL seasons from 2024-25 on (PWHL season_id >= 4);
@@ -39,6 +40,7 @@ TABLES = ROOT / "outputs" / "tables"
 REG_END_S = 3600
 OT_S = 300
 NO_ESCAPE_FIRST_PWHL_SEASON_ID = 4  # 2024-25 preseason onward
+OPENING_FACEOFF_TOLERANCE_S = 2  # a faceoff this close to the spell start is its opening faceoff
 
 
 # ---------------------------------------------------------------- load and harmonize
@@ -216,7 +218,7 @@ def build_pp_intervals(league: dict) -> pd.DataFrame:
                 reason = "advantage_over"
             else:
                 reason = "strength_change"
-            later_fo = fo[fo > spell_start]
+            later_fo = fo[fo > spell_start + OPENING_FACEOFF_TOLERANCE_S]
             rows.append({
                 "league": game["league"], "season": game["season"], "season_type": game["season_type"],
                 "game_id": gid, "spell": spell_id, "team": game[f"{side}_team"],
