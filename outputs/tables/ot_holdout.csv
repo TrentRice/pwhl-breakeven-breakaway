@@ -1,0 +1,21 @@
+league,split,method,log_score_total,test_goals
+NHL,"train 2015-23, test 2023-26",linear shape,-2020.2828151743715,493
+NHL,"train 2015-23, test 2023-26",per-minute shape,-2020.095612662643,493
+NHL,"train 2015-23, test 2023-26",constant rate,-2031.5048810240332,493
+NHL,"train 2015-23, test 2023-26",linear shape + home,-2021.210971314429,493
+PWHL,leave out 2024,base,-55.794148952964456,13
+PWHL,leave out 2024,base + home,-55.13415865912767,13
+PWHL,leave out 2024,base + team effects,-55.998480092250645,13
+PWHL,leave out 2024,constant rate,-56.1069788400349,13
+PWHL,leave out 2024-25,base,-62.44450721753567,15
+PWHL,leave out 2024-25,base + home,-62.511398314921564,15
+PWHL,leave out 2024-25,base + team effects,-62.66518407739966,15
+PWHL,leave out 2024-25,constant rate,-62.64189991135204,15
+PWHL,leave out 2025-26,base,-59.733666427841726,15
+PWHL,leave out 2025-26,base + home,-59.07539654008089,15
+PWHL,leave out 2025-26,base + team effects,-60.06952446856635,15
+PWHL,leave out 2025-26,constant rate,-59.728357874697124,15
+PWHL,leave-one-season-out total,base,-177.97232259834186,43
+PWHL,leave-one-season-out total,base + home,-176.72095351413014,43
+PWHL,leave-one-season-out total,base + team effects,-178.73318863821666,43
+PWHL,leave-one-season-out total,constant rate,-178.47723662608405,43

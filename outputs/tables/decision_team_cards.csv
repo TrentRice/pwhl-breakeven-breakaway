@@ -1,0 +1,13 @@
+team,best_shooter,top3,main_goalie,shootout_S_vs_average,crossover_vs_average,P_shot_better_2m30_vs_average,P_shot_better_2m30_min,P_shot_better_2m30_max,crossover_min,crossover_min_opponent,crossover_max,crossover_max_opponent
+BOS,Susanna Tapani,"Susanna Tapani, Sophie Shirley, Loren Gabel",Aerin Frankel,0.5269593062106431,109,0.39675,0.374,0.4345,107,SEA,300,TOR
+DET,Hannah Bilka,"Hannah Bilka, Britta Curl-Salemme, Hilary Knight",Corinne Schroeder,0.5037812416832776,114,0.4525,0.41975,0.4895,112,BOS,300,HAM
+HAM,Alina Müller,"Alina Müller, Brianne Jenner, Emily Clark",Kayle Osborne,0.49336106168260185,300,0.5365,0.50125,0.5685,157,MTL,300,DET
+MIN,Grace Zumwinkle,"Grace Zumwinkle, Kelly Pannek, Élizabeth Giguère",Maddie Rooney,0.5059815091558858,300,0.53125,0.485,0.56075,118,BOS,300,DET
+MTL,Marie-Philip Poulin,"Marie-Philip Poulin, Jessie Eldridge, Lina Ljungblom",Ann-Renée Desbiens,0.5369765267800385,111,0.4195,0.3925,0.457,109,BOS,300,HAM
+NY,Maja Nylén Persson,"Maja Nylén Persson, Denisa Křížová, Casey O’Brien",Elaine Chuli,0.48275590047019357,300,0.5205,0.486,0.5585,119,BOS,300,HAM
+OTT,Kateřina Mrázová,"Kateřina Mrázová, Fanuza Kadirova, Rebecca Leslie",Gwyneth Philips,0.49847465003784813,300,0.5315,0.4945,0.56975,119,BOS,300,DET
+SEA,Alex Carpenter,"Alex Carpenter, Anna Wilgren, Julia Gosling",Carly Jackson,0.5160726206504118,110,0.39975,0.36625,0.43625,106,BOS,112,HAM
+SJ,Maggie Connors,"Maggie Connors, Natálie Mlýnková, Anne Cherkowski",Abigail Levy,0.5174620920667722,110,0.413,0.38225,0.446,108,BOS,300,TOR
+TOR,Natalie Spooner,"Natalie Spooner, Emma Woods, Claire Dalton",Raygan Kirk,0.4782275524463174,300,0.5505,0.51425,0.58475,181,BOS,300,DET
+VAN,Sarah Nurse,"Sarah Nurse, Hannah Miller, Sophie Jaques",Emerance Maschmeyer,0.5077666021978333,111,0.419,0.38175,0.45625,109,BOS,114,HAM
+VGS,Erin Ambrose,"Erin Ambrose, Hayley Scamurra, Natalie Snodgrass",Nicole Hensley,0.4965660543045541,114,0.4425,0.405,0.4755,112,BOS,300,TOR

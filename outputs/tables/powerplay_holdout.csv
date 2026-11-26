@@ -1,0 +1,6 @@
+method,log_score,n_train_pieces,n_test_pieces,test_goals
+base,-0.36468883134119645,1634,1150,110
+base + team effects,-0.3650474492319633,1634,1150,110
+base + No Escape change,-0.36618856447162157,1634,1150,110
+league rate,-0.3669970384600197,1634,1150,110
+raw team rate,-0.36986672611847815,1634,1150,110

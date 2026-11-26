@@ -1,0 +1,8 @@
+check,value
+p*(t) at 5 seconds left is small (PS should almost always win),0.0171058225248499
+p*(t) is 0 at 0 seconds left,0.0
+P(PP goal) for a full 2:00 PP (compare NHL 38% with 2:00+ left; PWHL 3 of 6),0.3263946428391266
+sigma_season used for PP rate (log scale),0.053727203001698906
+average shooter pilot-rule penalty-shot p (zero),0.29980588556549537
+average shooter pilot-rule penalty-shot p (nhl),0.2737158513205752
+average shooter pilot-rule penalty-shot p (estimated),0.25709161959265237

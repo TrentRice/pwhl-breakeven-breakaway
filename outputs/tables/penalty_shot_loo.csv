@@ -1,0 +1,4 @@
+,rank,elpd_diff,dse,p_worse,diag_diff,diag_elpd,p,elpd,se,weight
+core + home + sudden death,0,0.0,0.0,,,,4.6,-108.0,4.9,1.0
+core + scoring skill,1,-1.0,1.5,0.78,|elpd_diff| < 4,,4.4,-110.0,5.2,0.0
+core,2,-2.0,1.1,0.96,|elpd_diff| < 4,,4.2,-110.0,5.2,0.0

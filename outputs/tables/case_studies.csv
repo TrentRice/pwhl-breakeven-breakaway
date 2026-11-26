@@ -1,0 +1,10 @@
+season,game_id,time_left,seconds_left,fouled_team,penalized_team,penalty,best_shooter,goalie_faced,p_shot,breakeven,P_shot_better,win_prob_gain_shot_minus_pp,model_recommends,what_happened,fouled_team_result
+2024,17,3:39,219,MTL,TOR,Slashing,Marie-Philip Poulin,Kristen Campbell,0.30772052125581295,0.31655318488484785,0.4625,-0.004572591972241392,power play,no goal on PP,L_SO
+2024,36,1:42,102,NY,TOR,Hooking,Jessie Eldridge,Kristen Campbell,0.298755292229383,0.2748145247405626,0.63025,0.012907680977554374,penalty shot,no goal on PP,L_SO
+2024,12,1:40,100,MIN,NY,Holding,Grace Zumwinkle,Corinne Schroeder,0.3242805065100738,0.28674195244023154,0.69225,0.019366325510651716,penalty shot,penalty shot awarded (breakaway foul),L_OT
+2024,65,0:11,11,BOS,OTT,Delay of Game,Hannah Brandt,Emerance Maschmeyer,0.32101487950665025,0.04078495363153786,1.0,0.13168694846719234,penalty shot,no goal on PP,W_SO
+2024-25,161,3:50,230,NY,MTL,Slashing,Maja Nylén Persson,Ann-Renée Desbiens,0.29828874190672555,0.31114370147568526,0.4325,-0.0067883792121024985,power play,PP goal,W_OT
+2024-25,156,2:58,178,MIN,MTL,Boarding,Grace Zumwinkle,Ann-Renée Desbiens,0.30837325186588316,0.3142918511282378,0.47225,-0.0030704007041488976,power play,no goal on PP,L_SO
+2025-26,280,2:49,169,MIN,TOR,Slashing,Grace Zumwinkle,Raygan Kirk,0.3436345855533075,0.33414694120343724,0.5435,0.004738641099031694,penalty shot,PP goal,W_OT
+2025-26,227,2:33,153,MTL,TOR,Interference,Marie-Philip Poulin,Raygan Kirk,0.335245827908983,0.3429055077136336,0.45775,-0.0028624092315848483,power play,no goal on PP,W_SO
+2025-26,269,1:10,70,NY,BOS,Tripping,Maja Nylén Persson,Aerin Frankel,0.2996742791633002,0.18823177714952474,0.9545,0.060879058306467435,penalty shot,no goal on PP,L_SO
