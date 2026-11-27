@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Breakeven Breakaway</title>
+  <meta name="description" content="Penalty shot or power play? A decision calculator for the PWHL's overtime pilot rule.">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Breakeven Breakaway</h1>
+    <p class="lede">A minor penalty is called in 3-on-3 overtime. Under the PWHL's pilot rule the fouled team can take a
+      <strong>penalty shot</strong> (any shooter it chooses) instead of a <strong>4-on-3 power play</strong>. Which gives the better chance to win?</p>
+  </header>
+
+  <main>
+    <section class="controls" aria-label="Situation">
+      <label>Your team (fouled)
+        <select id="team"></select>
+      </label>
+      <label>Shooter
+        <select id="shooter"></select>
+      </label>
+      <label>Opponent (penalized)
+        <select id="opponent"></select>
+      </label>
+      <label>Opposing goalie
+        <select id="goalie"></select>
+      </label>
+      <label class="time">Time left in overtime: <output id="time-out">2:00</output>
+        <input id="time" type="range" min="1" max="300" step="1" value="120">
+      </label>
+      <fieldset>
+        <legend>Penalty-shot assumption</legend>
+        <label><input type="radio" name="delta" value="zero" checked> Main: chosen shooter, like a shootout attempt</label>
+        <label><input type="radio" name="delta" value="nhl"> Cautious: historical penalty-shot gap</label>
+      </fieldset>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <p id="status">Loading model…</p>
+      <p id="verdict" class="verdict"></p>
+      <p id="prob" class="prob"></p>
+      <div id="details" class="details"></div>
+    </section>
+
+    <section class="chart-section">
+      <h2>The break-even rate through overtime</h2>
+      <div id="chart" class="chart"></div>
+      <ul class="legend">
+        <li><span class="key be"></span>Break-even: the penalty shot must score at least this often (90% band)</li>
+        <li><span class="key shooter"></span>Selected shooter vs selected goalie (90% band)</li>
+        <li><span class="key zone"></span>Penalty shot is the better choice</li>
+      </ul>
+      <p id="chart-note" class="note"></p>
+    </section>
+
+    <section class="about">
+      <h2>How it works</h2>
+      <p>Three Bayesian models, each validated on held-out seasons: penalty-shot success (shooter and goalie effects, from every
+        PWHL shootout attempt with an NHL-informed prior), 4-on-3 power-play scoring (PWHL 5-on-4 rate times a multiplier learned
+        from eleven NHL seasons), and overtime win probability (a 3-on-3 scoring rate that rises through overtime, plus the shootout).
+        For each of the model's posterior draws the calculator compares the two options; the percentage is the share of draws in
+        which the penalty shot wins more often.</p>
+      <p><strong>Limitations:</strong> few PWHL overtime penalties exist, so power-play scoring leans on NHL data; shooter
+        differences are small because shootout success is mostly luck; players with no PWHL shootout history count as league average; team shootout strength uses each team's
+        top five shooters and main goalie from the 2026-27 rosters.</p>
+      <p class="small"><span id="meta"></span> · Official statistics provided by Professional Women's Hockey League. NHL data via the NHL API.
+        · <a href="https://github.com/TrentRice/pwhl-breakeven-breakaway">Source code and methods</a></p>
+    </section>
+  </main>
+</body>
+</html>
