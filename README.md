@@ -4,9 +4,9 @@ A student poster project for the 2027 Connecticut Sports Analytics Symposium (CS
 
 **Try the calculator:** https://trentrice.github.io/pwhl-breakeven-breakaway/
 
-Pick your team, shooter, opponent, goalie and time left in overtime; it tells you whether to take the penalty shot or the power play, with the uncertainty.
+Pick your team, shooter and goalie, the opponent and their goalie, and the time left in overtime; it tells you whether to take the penalty shot or the power play, with the uncertainty.
 
-**Status:** analysis complete (data, models, decision engine, backtest, sensitivity analysis, figures and calculator). Remaining: poster, QR code and abstract (due March 22, 2027).
+**Status:** analysis complete (data, models, decision engine, backtest, sensitivity analysis, figures and calculator).
 
 ## The question
 
@@ -20,7 +20,7 @@ PWHL overtime penalties are rare (nine games over three seasons), so the models 
 
 - **Penalty-shot success:** Bayesian hierarchical logistic model of all 287 PWHL regular-season shootout attempts, with shooter and goalie effects and an NHL-informed prior.
 - **Overtime power-play scoring:** the PWHL 5-on-4 scoring rate times a 4-on-3 multiplier learned from eleven NHL seasons of 3-on-3 overtime, plus shorthanded goals against.
-- **Win probability:** a 3-on-3 scoring rate that rises as overtime goes on (learned from the NHL, level set from the PWHL), followed by an exact shootout calculation from each team's top five shooters and main goalie.
+- **Win probability:** a 3-on-3 scoring rate that rises as overtime goes on (learned from the NHL, level set from the PWHL), followed by an exact shootout calculation from each team's top five shooters against the opposing goalie.
 - **Decision:** for each posterior draw, compare P(win | penalty shot) with P(win | power play), and report the break-even rate and P(penalty shot is the better choice).
 
 Every extra model term (home ice, team effects, shooter scoring skill, a No Escape change) was tested once against a rule fixed in advance and kept only if it improved out-of-sample prediction; none did. Validation uses held-out seasons.
@@ -60,6 +60,7 @@ Pipeline (run each step from the repo root with `python -m src.<script>`):
 | Decision and backtest | `src/decision.py`, `src/backtest.py` | `outputs/tables/` |
 | Figures | `src/figures.py` | `outputs/figures/` |
 | Calculator data | `src/export_app.py` | `app/data/model.json` |
+| Poster QR code | `src/make_qr.py` | `poster/qr_calculator.svg`, `.png` |
 
 Tests: `pytest` (includes a check that the calculator reproduces `src/decision.py`). The calculator deploys to GitHub Pages from `app/` on every push to `main`.
 

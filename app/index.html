@@ -23,6 +23,9 @@
       <label>Shooter
         <select id="shooter"></select>
       </label>
+      <label>Your goalie
+        <select id="own-goalie"></select>
+      </label>
       <label>Opponent (penalized)
         <select id="opponent"></select>
       </label>
@@ -65,8 +68,8 @@
         For each of the model's posterior draws the calculator compares the two options; the percentage is the share of draws in
         which the penalty shot wins more often.</p>
       <p><strong>Limitations:</strong> few PWHL overtime penalties exist, so power-play scoring leans on NHL data; shooter
-        differences are small because shootout success is mostly luck; players with no PWHL shootout history count as league average; team shootout strength uses each team's
-        top five shooters and main goalie from the 2026-27 rosters.</p>
+        differences are small because shootout success is mostly luck; players with no PWHL shootout history count as league average; the shootout uses each team's top five
+        shooters from the 2026-27 rosters against the goalies selected above.</p>
       <p class="small"><span id="meta"></span> · Official statistics provided by Professional Women's Hockey League. NHL data via the NHL API.
         · <a href="https://github.com/TrentRice/pwhl-breakeven-breakaway">Source code and methods</a></p>
     </section>

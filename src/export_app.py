@@ -12,8 +12,9 @@ The page recomputes only the decision formulas per draw (no model fitting in the
     P(win | PS) = p + (1 - p) * W0(t)
     P(win | PP) = ppGoal[d] + ppNone[d] * W0(t - d),  d = min(120, t)
     p*(t)       = (P(win | PP) - W0(t)) / (1 - W0(t))
-with p = expit(alpha + delta + shooter effect + goalie effect). Shootout probabilities S for every
-team-vs-team matchup (each team's top five shooters and main goalie) are precomputed here.
+with p = expit(alpha + delta + shooter effect + goalie effect). The shootout probability S is computed in the
+page per draw (exact, as in src/model_ot_winprob.shootout_win_prob) from each team's top five shooters
+(exported here) and the two goalies the user selects.
 
 Contains model summaries only (no raw PWHL data), as allowed by CONVENTIONS.md.
 """
@@ -34,7 +35,6 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_DATA = ROOT / "app" / "data"
 N_DRAWS = 500
 DECIMALS = 5
-AVG = "AVG"
 
 
 def thin(post: D.Posterior, n: int) -> D.Posterior:
@@ -93,24 +93,16 @@ def build(post: D.Posterior) -> tuple[dict, dict]:
         main = lu[code]["goalie"]
         goalies.sort(key=lambda g: (g["id"] != main, g["id"] is None, g["name"]))
         teams.append({"code": code, "name": names.get(code, code), "skaters": skaters, "goalies": goalies,
-                      "mainGoalie": main})
-
-    # Shootout win probability for every ordered matchup (A = fouled team), incl. a league-average team
-    lineup = {code: (tuple(v["shooters"]), v["goalie"]) for code, v in lu.items()}
-    lineup[AVG] = ((None,) * 5, None)
-    shootout = {}
-    for a, (sa, ga) in lineup.items():
-        for b, (sb, gb) in lineup.items():
-            if a != b:
-                shootout[f"{a}|{b}"] = r(D.shootout_S(post, sa, ga, sb, gb))
-    shootout[f"{AVG}|{AVG}"] = r(np.full(post.n, 0.5))
+                      "mainGoalie": main, "shootoutShooters": lu[code]["shooters"]})
+        for sid in lu[code]["shooters"]:          # every shootout shooter's effect must be in the export
+            assert sid is None or sid in shooter_eff, (code, sid)
 
     model = {
         "meta": {
             "generated": date.today().isoformat(), "draws": post.n,
             "deltaCases": {"zero": D.DELTA_CASES["zero"], "nhl": D.DELTA_CASES["nhl"]},
             "credit": "Official statistics provided by Professional Women's Hockey League. NHL data via the NHL API.",
-            "notes": "Shootout strength uses each team's top five shooters and main goalie (2026-27 rosters).",
+            "notes": "Shootout: each team's top five shooters (2026-27 rosters) against the selected goalies.",
         },
         "draws": {
             "alpha": r(post.alpha), "deltaNhl": r(post.delta_nhl),
@@ -118,28 +110,29 @@ def build(post: D.Posterior) -> tuple[dict, dict]:
             "surv": [r(row) for row in surv],
         },
         "shooterEffects": shooter_eff, "goalieEffects": goalie_eff,
-        "teams": teams, "shootout": shootout,
+        "teams": teams,
     }
 
     # Test cases from the Python engine on the same draws (the page must reproduce these)
     checks = []
     rng = np.random.default_rng(D.SEED)
     codes = [t["code"] for t in teams]
-    scenarios = [(AVG, None, AVG, None, t, "zero") for t in (300, 150, 90, 30, 5)]
-    for _ in range(25):
-        a, b = rng.choice(codes, 2, replace=False)
-        ta = next(t for t in teams if t["code"] == a)
-        tb = next(t for t in teams if t["code"] == b)
+    by_code = {t["code"]: t for t in teams}
+    scenarios = []
+    for _ in range(35):
+        a, b = (str(x) for x in rng.choice(codes, 2, replace=False))
+        ta, tb = by_code[a], by_code[b]
         shooter = rng.choice([s["id"] for s in ta["skaters"][:5]] + [None])
+        own_goalie = rng.choice([g["id"] for g in ta["goalies"]] + [None])     # any goalie, incl. backups
         goalie = rng.choice([g["id"] for g in tb["goalies"]] + [None])
-        scenarios.append((a, shooter, b, goalie, int(rng.integers(1, 301)), str(rng.choice(["zero", "nhl"]))))
-    for a, sid, b, gid, t, case in scenarios:
-        S = np.asarray(shootout[f"{a}|{b}"])
+        scenarios.append((a, shooter, own_goalie, b, goalie, int(rng.integers(1, 301)), str(rng.choice(["zero", "nhl"]))))
+    for a, sid, own, b, gid, t, case in scenarios:
+        S = D.shootout_S(post, tuple(lu[a]["shooters"]), own, tuple(lu[b]["shooters"]), gid)
         p = D.p_shot(post, sid, gid, delta=case)
         pstar = D.breakeven(post, S, paths)[:, t]
         checks.append({
-            "team": a, "shooter": sid, "opponent": b, "goalie": gid, "seconds": t, "delta": case,
-            "pShotMean": float(p.mean()), "pstarMean": float(pstar.mean()),
+            "team": a, "shooter": sid, "ownGoalie": own, "opponent": b, "goalie": gid, "seconds": t, "delta": case,
+            "shootoutMean": float(S.mean()), "pShotMean": float(p.mean()), "pstarMean": float(pstar.mean()),
             "pShotBetter": float((p > pstar).mean()),
             "winPsMean": float(D.win_prob_ps(post, p, S)[:, t].mean()),
             "winPpMean": float(D.win_prob_pp(post, S, paths)[:, t].mean()),
@@ -156,7 +149,7 @@ def main() -> None:
         path.write_text(json.dumps(obj, separators=(",", ":"), allow_nan=False), encoding="utf-8")  # strict JSON
         print(f"{path.relative_to(ROOT)}: {path.stat().st_size / 1e6:.2f} MB")
     print(f"{len(model['teams'])} teams, {len(model['shooterEffects'])} shooters and "
-          f"{len(model['goalieEffects'])} goalies with history, {len(model['shootout'])} matchups")
+          f"{len(model['goalieEffects'])} goalies with history")
 
 
 if __name__ == "__main__":

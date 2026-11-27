@@ -6,13 +6,13 @@
  *   P(win | PS) = p + (1 - p) * W0(t)
  *   P(win | PP) = ppGoal[i][d] + ppNone[i][d] * W0(t - d),   d = min(120, t)
  *   p*(t)       = (P(win | PP) - W0(t)) / (1 - W0(t))
+ * S comes from shootoutDraws: each team's top five shooters against the other side's selected goalie.
  * Data come from src/export_app.py (thinned posterior draws of the fitted models).
  */
 "use strict";
 
 const PP_LEN = 120;
 const OT_LEN = 300;
-const AVG = "AVG";
 
 // ---------------------------------------------------------------- math
 
@@ -31,8 +31,39 @@ function summarize(values) {
   return { mean: sum / values.length, lo: quantile(s, 0.05), hi: quantile(s, 0.95) };
 }
 
-function shootoutDraws(model, team, opponent) {
-  return model.shootout[`${team}|${opponent}`] || model.shootout[`${AVG}|${AVG}`];
+function effectAt(effects, id, i) { return id && effects[id] ? effects[id][i] : 0; }
+
+/** P(team wins the shootout) per draw, exactly (same as src/model_ot_winprob.shootout_win_prob):
+ *  five rounds (Poisson-binomial goal counts), then sudden death with each team's average shooter.
+ *  Your shooters face the opponent's goalie; the opponent's shooters face your goalie. */
+function shootoutDraws(model, team, ownGoalie, opponent, oppGoalie) {
+  const d = model.draws, n = d.alpha.length;
+  const sa = model.teams.find((t) => t.code === team).shootoutShooters;
+  const sb = model.teams.find((t) => t.code === opponent).shootoutShooters;
+  const out = new Float64Array(n);
+  const dist = (shooters, goalie, i) => {
+    const pr = new Float64Array(shooters.length + 1); pr[0] = 1;
+    let mean = 0;
+    shooters.forEach((sid, j) => {
+      const q = expit(d.alpha[i] + effectAt(model.shooterEffects, sid, i) + effectAt(model.goalieEffects, goalie, i));
+      mean += q / shooters.length;
+      for (let k = j + 1; k >= 1; k--) pr[k] = pr[k] * (1 - q) + pr[k - 1] * q;
+      pr[0] *= 1 - q;
+    });
+    return { pr, mean };
+  };
+  for (let i = 0; i < n; i++) {
+    const A = dist(sa, oppGoalie, i), B = dist(sb, ownGoalie, i);
+    let win = 0, tie = 0, below = 0;
+    for (let a = 0; a < A.pr.length; a++) {
+      win += A.pr[a] * below;            // B scored fewer than a
+      tie += A.pr[a] * B.pr[a];
+      below += B.pr[a];
+    }
+    const pa = A.mean, pb = B.mean;
+    out[i] = win + tie * (pa * (1 - pb)) / (pa * (1 - pb) + pb * (1 - pa));
+  }
+  return out;
 }
 
 function pShotDraws(model, shooterId, goalieId, deltaCase) {
@@ -63,8 +94,8 @@ function breakevenDraw(model, i, t, S) {
 }
 
 /** Everything shown for one moment: per-draw comparison summarized. */
-function evaluate(model, { team, shooter, opponent, goalie, seconds, delta }) {
-  const S = shootoutDraws(model, team, opponent);
+function evaluate(model, { team, shooter, ownGoalie, opponent, goalie, seconds, delta }, S) {
+  S = S || shootoutDraws(model, team, ownGoalie, opponent, goalie);
   const p = pShotDraws(model, shooter, goalie, delta);
   const n = p.length;
   const pstar = new Float64Array(n), winPs = new Float64Array(n), winPpArr = new Float64Array(n), diff = new Float64Array(n);
@@ -83,9 +114,8 @@ function evaluate(model, { team, shooter, opponent, goalie, seconds, delta }) {
   };
 }
 
-/** Break-even curve over the whole overtime (depends on the matchup, not the shooter). */
-function breakevenCurve(model, team, opponent) {
-  const S = shootoutDraws(model, team, opponent);
+/** Break-even curve over the whole overtime (depends on the shootout, not the penalty shooter). */
+function breakevenCurve(model, S) {
   const n = model.draws.alpha.length;
   const curve = [];
   const buf = new Float64Array(n);
@@ -97,8 +127,7 @@ function breakevenCurve(model, team, opponent) {
 }
 
 /** Last second (scanning down from 5:00) at which the shot is better in at least half the draws. */
-function crossover(model, team, opponent, p) {
-  const S = shootoutDraws(model, team, opponent);
+function crossover(model, S, p) {
   const n = p.length;
   for (let t = OT_LEN; t >= 1; t--) {
     let better = 0;
@@ -125,13 +154,13 @@ function verdict(prob) {
 function init() {
   const $ = (id) => document.getElementById(id);
   const els = {
-    team: $("team"), shooter: $("shooter"), opponent: $("opponent"), goalie: $("goalie"),
+    team: $("team"), shooter: $("shooter"), ownGoalie: $("own-goalie"), opponent: $("opponent"), goalie: $("goalie"),
     time: $("time"), timeOut: $("time-out"), delta: document.querySelectorAll('input[name="delta"]'),
     verdict: $("verdict"), prob: $("prob"), details: $("details"), chart: $("chart"), note: $("chart-note"),
     status: $("status"),
   };
   let model = null;
-  let curveKey = "", curve = null;
+  let curveKey = "", curve = null, shootout = null;
 
   fetch("data/model.json")
     .then((r) => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
@@ -142,18 +171,23 @@ function init() {
 
   function setup() {
     for (const sel of [els.team, els.opponent]) {
-      sel.append(option(AVG, "League-average team"));
       for (const t of model.teams) sel.append(option(t.code, t.name));
     }
     els.team.value = model.teams[0].code;
     els.opponent.value = model.teams[1].code;
-    els.team.addEventListener("change", () => { fillShooters(); update(); });
-    els.opponent.addEventListener("change", () => { fillGoalies(); update(); });
-    for (const el of [els.shooter, els.goalie, els.time]) el.addEventListener("input", update);
+    els.team.addEventListener("change", () => {
+      if (separate(els.team, els.opponent)) fillGoalies(els.goalie, els.opponent.value);
+      fillShooters(); fillGoalies(els.ownGoalie, els.team.value); update();
+    });
+    els.opponent.addEventListener("change", () => {
+      if (separate(els.opponent, els.team)) { fillShooters(); fillGoalies(els.ownGoalie, els.team.value); }
+      fillGoalies(els.goalie, els.opponent.value); update();
+    });
+    for (const el of [els.shooter, els.ownGoalie, els.goalie, els.time]) el.addEventListener("input", update);
     els.delta.forEach((r) => r.addEventListener("change", update));
     let resizeTimer = null;
     window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(update, 150); });
-    fillShooters(); fillGoalies();
+    fillShooters(); fillGoalies(els.ownGoalie, els.team.value); fillGoalies(els.goalie, els.opponent.value);
     els.status.textContent = "";
     $("meta").textContent = `Model updated ${model.meta.generated} · ${model.meta.draws} posterior draws`;
     update();
@@ -161,10 +195,16 @@ function init() {
 
   function teamOf(code) { return model.teams.find((t) => t.code === code); }
 
+  // A team can't play itself: if both menus match, move the other one. Returns true if it moved.
+  function separate(changed, other) {
+    if (changed.value !== other.value) return false;
+    other.value = model.teams.find((t) => t.code !== changed.value).code;
+    return true;
+  }
+
   function fillShooters() {
     els.shooter.replaceChildren(option("", "League-average shooter"));
     const t = teamOf(els.team.value);
-    if (!t) return;
     for (const s of t.skaters) {
       els.shooter.append(option(s.id || "", s.id ? s.name : `${s.name} (no shootout history: league average)`));
     }
@@ -172,20 +212,19 @@ function init() {
     els.shooter.value = best ? best.id : "";
   }
 
-  function fillGoalies() {
-    els.goalie.replaceChildren(option("", "League-average goalie"));
-    const t = teamOf(els.opponent.value);
-    if (!t) return;
+  function fillGoalies(sel, code) {
+    sel.replaceChildren(option("", "League-average goalie"));
+    const t = teamOf(code);
     for (const g of t.goalies) {
-      els.goalie.append(option(g.id || "", g.id ? g.name : `${g.name} (no shootout history: league average)`));
+      sel.append(option(g.id || "", g.id ? g.name : `${g.name} (no shootout history: league average)`));
     }
-    els.goalie.value = t.mainGoalie || "";
+    sel.value = t.mainGoalie || "";
   }
 
   function state() {
     return {
       team: els.team.value, opponent: els.opponent.value,
-      shooter: els.shooter.value || null, goalie: els.goalie.value || null,
+      shooter: els.shooter.value || null, ownGoalie: els.ownGoalie.value || null, goalie: els.goalie.value || null,
       seconds: Math.max(1, Number(els.time.value)),
       delta: [...els.delta].find((r) => r.checked).value,
     };
@@ -195,7 +234,13 @@ function init() {
     if (!model) return;
     const st = state();
     els.timeOut.textContent = clock(st.seconds);
-    const res = evaluate(model, st);
+    const key = `${st.team}|${st.ownGoalie}|${st.opponent}|${st.goalie}`;
+    if (key !== curveKey) {
+      shootout = shootoutDraws(model, st.team, st.ownGoalie, st.opponent, st.goalie);
+      curve = breakevenCurve(model, shootout);
+      curveKey = key;
+    }
+    const res = evaluate(model, st, shootout);
     const v = verdict(res.pShotBetter);
     els.verdict.textContent = v.text;
     els.verdict.dataset.kind = v.key;
@@ -210,10 +255,8 @@ function init() {
       `<tr><th scope="row">Gain from the penalty shot</th><td>${signedPts(res.diff.mean)}</td><td class="range">${signedPts(res.diff.lo)} to ${signedPts(res.diff.hi)}</td></tr>` +
       `<tr><th scope="row">Your team wins a shootout</th><td>${pct(res.shootout.mean, 1)}</td><td class="range">${pct(res.shootout.lo)}–${pct(res.shootout.hi)}</td></tr>` +
       `</tbody></table>`;
-    const key = `${st.team}|${st.opponent}`;
-    if (key !== curveKey) { curve = breakevenCurve(model, st.team, st.opponent); curveKey = key; }
     const p = pShotDraws(model, st.shooter, st.goalie, st.delta);
-    const cross = crossover(model, st.team, st.opponent, p);
+    const cross = crossover(model, shootout, p);
     els.note.textContent = cross === null ? "With this shooter and goalie, the power play is better at every point in overtime."
       : cross >= OT_LEN ? "With this shooter and goalie, the penalty shot is at least even all overtime."
       : `With this shooter and goalie, the penalty shot becomes the better choice inside ${clock(cross)}.`;
@@ -256,5 +299,5 @@ function init() {
 
 if (typeof document !== "undefined") document.addEventListener("DOMContentLoaded", init);
 if (typeof module !== "undefined") {
-  module.exports = { evaluate, breakevenCurve, crossover, pShotDraws, shootoutDraws, breakevenDraw, summarize, quantile, verdict, AVG };
+  module.exports = { evaluate, breakevenCurve, crossover, pShotDraws, shootoutDraws, breakevenDraw, summarize, quantile, verdict };
 }
