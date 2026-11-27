@@ -29,6 +29,8 @@ jobs:
           node-version: 20
       - name: Check calculator against the Python engine
         run: node tests/app_check.js
+      - name: Stamp the commit into asset URLs (so browsers never mix old and new files)
+        run: sed -i "s/__VERSION__/${GITHUB_SHA::7}/g" app/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

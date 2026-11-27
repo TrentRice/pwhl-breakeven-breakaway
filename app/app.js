@@ -12,6 +12,9 @@
 "use strict";
 
 const PP_LEN = 120;
+// Deploys stamp the commit into the script URL (app.js?v=<sha>); reuse it so the data file is never a stale cached copy.
+const VERSION = typeof document !== "undefined" && document.currentScript
+  ? new URL(document.currentScript.src).searchParams.get("v") || "" : "";
 const OT_LEN = 300;
 
 // ---------------------------------------------------------------- math
@@ -162,7 +165,7 @@ function init() {
   let model = null;
   let curveKey = "", curve = null, shootout = null;
 
-  fetch("data/model.json")
+  fetch(`data/model.json?v=${encodeURIComponent(VERSION)}`)
     .then((r) => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
     .then((m) => { model = m; setup(); })
     .catch((e) => { els.status.textContent = `Could not load the model data (${e.message}).`; });
